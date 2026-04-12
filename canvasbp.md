@@ -490,6 +490,11 @@ The right pane shows only one mode at a time:
 - Review Mode
 - Edit Mode
 
+Mode switching rule:
+- after an edit action completes, clicking empty canvas space (no entity hit)
+  clears selection and immediately switches the right pane to Review Mode
+- clicking an entity switches the right pane to Edit Mode for that selection
+
 9.1 Review Mode
 
 Review Mode shows:
@@ -618,6 +623,8 @@ Meaning:
 Selection:
 - click to select
 - shift-click for multi-select
+- click empty canvas space after an action completes to clear selection and
+  activate Review Mode
 
 Movement:
 - drag Parts to move them
