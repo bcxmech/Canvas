@@ -34,7 +34,7 @@ Build a technical, geometry-aware editor for modeling structured diagrams with p
 ### 3.1 Global Layout
 The UI SHALL include:
 1. **Top Bar** with: File, Edit, View, Zoom, Snap, Validate, Export, and Review/Edit Toggle.
-2. **Left Pane** actions: Add Part, Add Interface, Add Note, Delete Entity, Reset Canvas.
+2. **Left Pane** actions: Add Part, Add Interface, Add Connector, Add Note, Delete Entity, Reset Canvas.
 3. **Center Canvas** as SVG render area with grid/guides and connector display.
 4. **Right Pane** that displays exactly one mode at a time: Review mode or Edit mode.
 5. **Status Bar** showing cursor x/y, zoom, selection count, snap state, and hovered element.
@@ -225,6 +225,7 @@ Validation SHALL be callable from the top bar Validate action and SHOULD surface
 - Interface edge snapping SHALL align with `maybeSnapInterfaceToPartEdge`.
 
 ### 10.4 Connector Behavior
+- Connector creation from the left-pane `Add Connector` action SHALL guide endpoint selection (source interface then target interface) before route generation.
 - Endpoint resolution SHALL align with `resolveConnectorEndpointSide` + `getConnectorEndpoints`.
 - Connector reversal SHALL align with `reverseConnector`.
 - Route selection SHALL implement the contract represented by `chooseBestConnectorRoute`.
