@@ -327,6 +327,8 @@ export function getConnectorEndpoints(doc: DocumentModel, connector: ConnectorEn
   return {
     start: getEdgeMidpoint(source, sourceSide),
     end: getEdgeMidpoint(target, targetSide),
+    sourceSide,
+    targetSide,
   };
 }
 
@@ -342,8 +344,197 @@ export function reverseConnector(connector: ConnectorEntity) {
   }
 }
 
-export function chooseBestConnectorRoute(_doc: DocumentModel, connector: ConnectorEntity): Point[] {
-  return connector.routing.segments;
+const SIDE_NORMALS: Record<Side, Point> = {
+  top: { x: 0, y: -1 },
+  right: { x: 1, y: 0 },
+  bottom: { x: 0, y: 1 },
+  left: { x: -1, y: 0 },
+};
+
+function addPoint(a: Point, b: Point): Point {
+  return { x: a.x + b.x, y: a.y + b.y };
+}
+
+function scalePoint(v: Point, scalar: number): Point {
+  return { x: v.x * scalar, y: v.y * scalar };
+}
+
+function isRectEntity(entity: Entity): entity is PartEntity | InterfaceEntity | NoteEntity {
+  return "x" in entity && "y" in entity && "width" in entity && "height" in entity;
+}
+
+function inflateRect(rect: RectEntity, margin: number): RectEntity {
+  return {
+    ...rect,
+    x: rect.x - margin,
+    y: rect.y - margin,
+    width: rect.width + margin * 2,
+    height: rect.height + margin * 2,
+  };
+}
+
+function isPointInsideRect(point: Point, rect: RectEntity) {
+  return (
+    point.x > rect.x &&
+    point.x < rect.x + rect.width &&
+    point.y > rect.y &&
+    point.y < rect.y + rect.height
+  );
+}
+
+function segmentIntersectsRect(a: Point, b: Point, rect: RectEntity): boolean {
+  if (a.x === b.x) {
+    const x = a.x;
+    if (x <= rect.x || x >= rect.x + rect.width) return false;
+    const minY = Math.min(a.y, b.y);
+    const maxY = Math.max(a.y, b.y);
+    return maxY > rect.y && minY < rect.y + rect.height;
+  }
+
+  if (a.y === b.y) {
+    const y = a.y;
+    if (y <= rect.y || y >= rect.y + rect.height) return false;
+    const minX = Math.min(a.x, b.x);
+    const maxX = Math.max(a.x, b.x);
+    return maxX > rect.x && minX < rect.x + rect.width;
+  }
+
+  return false;
+}
+
+function countTurns(points: Point[]) {
+  let turns = 0;
+  for (let i = 1; i < points.length - 1; i += 1) {
+    const prev = points[i - 1];
+    const current = points[i];
+    const next = points[i + 1];
+    const incomingHorizontal = prev.y === current.y;
+    const outgoingHorizontal = current.y === next.y;
+    if (incomingHorizontal !== outgoingHorizontal) {
+      turns += 1;
+    }
+  }
+  return turns;
+}
+
+function routeLength(points: Point[]) {
+  let total = 0;
+  for (let i = 1; i < points.length; i += 1) {
+    total += Math.abs(points[i].x - points[i - 1].x) + Math.abs(points[i].y - points[i - 1].y);
+  }
+  return total;
+}
+
+function simplifyCollinear(points: Point[]) {
+  if (points.length <= 2) return points;
+  const out = [points[0]];
+  for (let i = 1; i < points.length - 1; i += 1) {
+    const prev = out[out.length - 1];
+    const current = points[i];
+    const next = points[i + 1];
+    if ((prev.x === current.x && current.x === next.x) || (prev.y === current.y && current.y === next.y)) {
+      continue;
+    }
+    out.push(current);
+  }
+  out.push(points[points.length - 1]);
+  return out;
+}
+
+function buildCandidates(startStub: Point, endStub: Point): Point[][] {
+  const hv: Point[] = [startStub, { x: endStub.x, y: startStub.y }, endStub];
+  const vh: Point[] = [startStub, { x: startStub.x, y: endStub.y }, endStub];
+
+  const minX = Math.min(startStub.x, endStub.x);
+  const maxX = Math.max(startStub.x, endStub.x);
+  const minY = Math.min(startStub.y, endStub.y);
+  const maxY = Math.max(startStub.y, endStub.y);
+  const gutter = 24;
+
+  return [
+    hv,
+    vh,
+    [startStub, { x: minX - gutter, y: startStub.y }, { x: minX - gutter, y: endStub.y }, endStub],
+    [startStub, { x: maxX + gutter, y: startStub.y }, { x: maxX + gutter, y: endStub.y }, endStub],
+    [startStub, { x: startStub.x, y: minY - gutter }, { x: endStub.x, y: minY - gutter }, endStub],
+    [startStub, { x: startStub.x, y: maxY + gutter }, { x: endStub.x, y: maxY + gutter }, endStub],
+  ];
+}
+
+function intersectsAnyObstacle(polyline: Point[], obstacles: RectEntity[]) {
+  for (let i = 1; i < polyline.length; i += 1) {
+    const a = polyline[i - 1];
+    const b = polyline[i];
+    for (const obstacle of obstacles) {
+      if (isPointInsideRect(a, obstacle) || isPointInsideRect(b, obstacle) || segmentIntersectsRect(a, b, obstacle)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+export function chooseBestConnectorRoute(doc: DocumentModel, connector: ConnectorEntity): Point[] {
+  const endpoints = getConnectorEndpoints(doc, connector);
+  const stubLength = 16;
+  const startStub = addPoint(endpoints.start, scalePoint(SIDE_NORMALS[endpoints.sourceSide], stubLength));
+  const endStub = addPoint(endpoints.end, scalePoint(SIDE_NORMALS[endpoints.targetSide], stubLength));
+
+  const basePath = [endpoints.start, startStub];
+  const finalPath = [endStub, endpoints.end];
+  const candidates = buildCandidates(startStub, endStub);
+
+  const obstacleMargin = 8;
+  const obstacles: RectEntity[] = [];
+  if (connector.connectorKind === "external") {
+    for (const entityId of Object.keys(doc.entities)) {
+      const entity = doc.entities[entityId];
+      if (!isRectEntity(entity)) continue;
+      if (entity.id === connector.source.interfaceId || entity.id === connector.target.interfaceId) continue;
+      if (entity.type !== "part" && entity.type !== "interface" && entity.type !== "note") continue;
+      obstacles.push(inflateRect(entity, obstacleMargin));
+    }
+  }
+
+  let best: Point[] | null = null;
+  let bestScore = Infinity;
+
+  for (const candidate of candidates) {
+    const polyline = simplifyCollinear([...basePath, ...candidate.slice(1, -1), ...finalPath]);
+    if (connector.connectorKind === "external" && intersectsAnyObstacle(polyline, obstacles)) {
+      continue;
+    }
+
+    const score = routeLength(polyline) + countTurns(polyline) * 32;
+    if (score < bestScore) {
+      best = polyline;
+      bestScore = score;
+    }
+  }
+
+  return best ?? simplifyCollinear([...basePath, ...finalPath]);
+}
+
+export function rerouteConnector(doc: DocumentModel, connectorId: string) {
+  const entity = doc.entities[connectorId];
+  if (!entity || entity.type !== "connector") return;
+  entity.routing.segments = chooseBestConnectorRoute(doc, entity);
+}
+
+export function normalizeDrawOrder(doc: DocumentModel) {
+  const priority: Record<EntityType, number> = {
+    part: 0,
+    interface: 1,
+    note: 2,
+    connector: 3,
+  };
+
+  doc.order.sort((a, b) => {
+    const left = doc.entities[a];
+    const right = doc.entities[b];
+    if (!left || !right) return 0;
+    return priority[left.type] - priority[right.type];
+  });
 }
 
 export function moveNote(note: NoteEntity, dx: number, dy: number) {
@@ -387,5 +578,6 @@ export const handlers = {
     getEndpoints: getConnectorEndpoints,
     reverse: reverseConnector,
     chooseRoute: chooseBestConnectorRoute,
+    reroute: rerouteConnector,
   },
 };
