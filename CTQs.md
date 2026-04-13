@@ -152,18 +152,35 @@ Does routing treat entity bodies and labels according to the defined obstacle ru
 46. Rerouting after dependent changes
 When connected entities move or change, do connectors reroute correctly?
 
+47. Connector stud presence
+When a connector is created, is its stud present and rendered by default?
+
+48. Recalculate and redraw on interface move
+If any connected interface moves, is connector routing recalculated and redrawn immediately?
+
+49. Recalculate and redraw on owning-part move
+If the owning part of any connected interface moves, is connector routing recalculated and redrawn immediately?
+
 H. Connector Editable Attributes
 
-47. Direction edit and render
+50. Direction edit and render
 If connector direction is editable, does reversing it update arrowheads and rendered direction immediately?
 
-48. Arrowhead-side edit and render
+51. Arrowhead-side edit and render
 If arrowhead side is editable, does the arrowhead move to the correct side immediately?
 
-49. Connector content and style edit
+52. Connector content and style edit
 If connector text, color, or style attributes are editable, do they update immediately and correctly?
 
 I. Naming and Identity
 
-50. Naming convention integrity
+53. Naming convention integrity
 Do automatically generated IDs and derived naming conventions remain correct after create, edit, connect, delete, save, and reload operations?
+
+J. Canvas Navigation and Interaction
+
+54. Mouse-wheel zoom in/out
+Can users zoom in and out using the mouse wheel/scroll input?
+
+55. Middle-mouse pan
+Can users pan the canvas while the middle mouse button is pressed?
