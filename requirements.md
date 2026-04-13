@@ -96,6 +96,8 @@ Supported entity types:
 - Resizing SHALL enforce minimum dimensions.
 - A Part SHALL maintain child interfaces (`interfaceIds`).
 - Interfaces SHALL remain fully contained within their parent Part after drag/resize.
+- A Part ID label SHALL be movable within the Part geometry while remaining inside Part bounds.
+- Updating a Part ID label SHALL immediately propagate to dependent child interface displays that reference that Part ID.
 
 ## 6.2 Interface Requirements
 - An Interface SHALL belong to exactly one Part (`parentPartId`).
@@ -116,6 +118,7 @@ Supported entity types:
 - Connector SHALL support arrow direction modes: `none|source|target|both`.
 - **Only connector direction SHALL be reversible**.
 - Reversal SHALL swap source/target and remap arrow-head semantics only; kind/content/style remain unchanged.
+- If arrow direction is reversed from Edit Mode controls, the rendered connector SHALL immediately reflect the new direction.
 
 ### Endpoint and routing behavior
 - Routing model SHALL support orthogonal segments.
@@ -218,6 +221,9 @@ This section maps the product behavior to `CTQs.md` and is mandatory for impleme
 - Review Mode SHALL support editing document-level defaults (`settings`).
 - When defaults and overrides coexist, instance overrides SHALL take precedence deterministically.
 - Changes to inherited/default values SHALL propagate to all dependent entities immediately.
+- Arrow size SHALL be editable per connector in Edit Mode (right pane) as an instance-level attribute.
+- Document Settings SHALL expose a global arrow-size default; changing it SHALL update all arrows that do not define an instance override.
+- Document Settings updates are global and SHALL reflect on the canvas immediately after commit.
 
 ### 11.3 Right-pane behavior (CTQ C: 16-20)
 - Exactly one pane mode SHALL render at a time (`review` XOR `edit`).
@@ -248,6 +254,7 @@ This section maps the product behavior to `CTQs.md` and is mandatory for impleme
 - Auto-sized entities SHALL resize to fit text and preserve readability.
 - Multiline text SHALL remain readable and geometrically valid.
 - Font-size/style changes SHALL rerender all affected text immediately.
+- Interface label text SHALL be normalized to trim leading and trailing whitespace before persistence/rendering.
 
 ### 11.7 Connector logic, routing, and editable connector fields (CTQ G+H: 38-49)
 - Connectors SHALL be classified as `internal` or `external` deterministically.
