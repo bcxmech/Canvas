@@ -167,3 +167,20 @@ I. Naming and Identity
 
 50. Naming convention integrity
 Do automatically generated IDs and derived naming conventions remain correct after create, edit, connect, delete, save, and reload operations?
+
+J. Text Field Focus Retention
+
+51. Typing focus stability
+While the user types in a text field, does keyboard focus remain in that same field?
+
+52. No focus steal on rerender
+During model updates, validation passes, or canvas rerenders triggered by typing, is focus preserved on the active text field?
+
+53. Explicit click-away behavior
+Does focus leave the active text field only when the user explicitly clicks another focus target?
+
+54. Tab navigation behavior
+Does pressing `Tab` move focus according to expected tab order without unintended intermediate blur/focus jumps?
+
+55. Enter-as-commit behavior
+When `Enter` is configured as a commit action for a field, does pressing `Enter` commit correctly and then move/retain focus according to the defined field behavior?

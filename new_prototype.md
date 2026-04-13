@@ -34,6 +34,7 @@ const DocumentModel = {
 ### UI-mode contract
 - Exactly one UI mode is active at a time: `edit` XOR `review`.
 - Pressing `Esc` interrupts active tools, clears selection, and switches to `review`.
+- While editing a text field, focus stays on that field until explicit user intent changes focus (click elsewhere, `Tab`, or `Enter` when `Enter` commits that field).
 
 ---
 
@@ -200,6 +201,12 @@ Connector creation flow:
 2. Select `target.interfaceId`.
 3. Resolve endpoint sides and compute initial orthogonal route.
 4. Persist connector in `entities` and append id to `order`.
+
+Text-edit focus rule:
+1. Begin typing in a text field (right pane or inline editor).
+2. Keep `ui.activeTextFieldId` (or equivalent transient UI state) stable through rerenders.
+3. Commit without blur only if `Enter` is configured as commit for that field.
+4. Release focus only on explicit click-away, `Tab` navigation, or commit-enter behavior.
 
 ### 3.4 Note
 
