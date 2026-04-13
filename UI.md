@@ -42,6 +42,7 @@ This document translates the requirements and prototypes into a concrete UI layo
 - **Snap toggle** immediately affects drag/snap behavior.
 - **Validate** runs model/geometry/routing checks and reports results.
 - **Export** supports outputs (e.g., SVG/image/model payload).
+- Top-bar actions that mutate state commit immediately; no Apply button is used for right-pane edits.
 
 ---
 
@@ -94,6 +95,11 @@ Shows only fields for the selected item.
 └─────────────────────────────────────┘
 ```
 
+Edit-mode CTQ rules:
+- Only selected-entity editable fields are visible (no document settings, no internal fields).
+- Invalid values are constrained or blocked with inline validation.
+- Field edits commit on finish (`blur`, `Enter`, picker close, drag-end) and rerender immediately.
+
 ## 4.2 Review Mode
 
 Shows document-level settings and state summary.
@@ -116,6 +122,11 @@ Shows document-level settings and state summary.
 │ - Validation status                 │
 └─────────────────────────────────────┘
 ```
+
+Review-mode CTQ rules:
+- Document settings block appears above summary.
+- Summary counts and validation status refresh immediately after each committed edit.
+- Document-level defaults can be edited here and propagate to dependent entities.
 
 ### Mode rule
 - Right pane must render **exactly one** mode at a time.
@@ -141,6 +152,7 @@ Shows document-level settings and state summary.
 - Drag body to move.
 - Drag edges/corners to resize.
 - Selection state shows handles/highlight.
+- Resize/move operations commit at drag-end and update right pane + status bar immediately.
 
 ## 5.2 Viewport controls
 
@@ -161,6 +173,14 @@ part/note obstacles      ─┘
 - For `external` connectors, router avoids crossing other entities (parts, interfaces, notes).
 - `internal` connectors may cross entities because both endpoints are within the same part context.
 - Connector **direction reversal** is supported; other connector semantics are not reversed.
+- Connector style/text/direction edits in Edit Mode rerender on commit with no stale arrowhead state.
+
+## 5.4 Containment and snapping UX
+
+- Interfaces are always clamped within parent part bounds.
+- Edge snapping can attach interfaces to top/right/bottom/left edges when within threshold.
+- If outside snap threshold, snapped-edge state clears and free movement within bounds is preserved.
+- Snapped state is visually clear and consistent with stored model state.
 
 ---
 
@@ -196,7 +216,22 @@ This ensures no “Apply” button workflow and avoids stale visual state.
 
 ---
 
-## 8) Responsive/Scaling Guidance
+## 8) CTQ Coverage Checklist (UI-specific)
+
+- [ ] No Apply button required for right-pane edits.
+- [ ] Edit-finish commits update model and canvas immediately.
+- [ ] Right pane is always exclusive: Edit xor Review.
+- [ ] Review settings appear above summary.
+- [ ] Selection changes retarget Edit Mode immediately.
+- [ ] Geometry fields are hidden when direct manipulation is intended.
+- [ ] Containment and snapping behaviors are visible and correct.
+- [ ] Text/font edits auto-size and rerender correctly.
+- [ ] Connector direction/arrowhead/content/style edits rerender immediately.
+- [ ] Status bar and review summary stay synchronized with current model state.
+
+---
+
+## 9) Responsive/Scaling Guidance
 
 - Keep top bar and status bar fixed-height.
 - Panes are fixed or min/max width; center canvas expands fluidly.
@@ -204,7 +239,7 @@ This ensures no “Apply” button workflow and avoids stale visual state.
 
 ---
 
-## 9) UI Acceptance Checklist (Condensed)
+## 10) UI Acceptance Checklist (Condensed)
 
 - Right pane exclusivity: Edit **xor** Review.
 - **Esc** interrupts active interactions, deselects all, and switches to Review mode.

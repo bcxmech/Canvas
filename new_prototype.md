@@ -2,6 +2,8 @@
 
 This unified prototype merges the previous `prototype.md` and `diagram-model-prototypes.md` into one canonical, model-first reference aligned to `requirements.md` and `UI.md`.
 
+CTQ alignment note: this prototype explicitly encodes commit-on-edit-finish behavior, right-pane exclusivity, attribute scoping, immediate rerender, and connector rerouting invariants from `CTQs.md`.
+
 ## 1) Canonical document model
 
 ```js
@@ -34,6 +36,7 @@ const DocumentModel = {
 ### UI-mode contract
 - Exactly one UI mode is active at a time: `edit` XOR `review`.
 - Pressing `Esc` interrupts active tools, clears selection, and switches to `review`.
+- Review mode shows document settings before the canvas summary block.
 
 ---
 
@@ -242,6 +245,32 @@ Note behavior requirements:
 
 ## 4) Interaction prototypes
 
+### 4.0 Edit commit pipeline (no Apply button)
+
+```js
+function commitEdit(doc, patch, ctx) {
+  // ctx = { entityId?, fieldPath, source: "pane" | "canvas", finishedBy }
+  // finishedBy: "blur" | "enter" | "picker-close" | "drag-end"
+  const next = structuredClone(doc)
+  const normalized = normalizeEditValue(ctx.fieldPath, patch.value)
+
+  enforceFieldConstraintsOrThrow(next, ctx, normalized)
+  applyScopedPatch(next, ctx, normalized)
+
+  recomputeAutosize(next, ctx)
+  recomputeContainmentAndSnap(next, ctx)
+  recomputeConnectorEndpointsAndRoutes(next, ctx)
+  refreshReviewSummary(next)
+
+  return next
+}
+```
+
+Contract:
+- No explicit Apply action is required for pane edits.
+- Commit occurs at edit-finish boundaries only.
+- Post-commit render reflects model changes immediately with no stale values.
+
 ### 4.1 Zoom and pan input
 
 ```js
@@ -260,13 +289,38 @@ function onMiddleMousePanEnd(doc) {
 }
 ```
 
-### 4.2 Esc behavior (mode + tool reset)
+### 4.2 Selection and right-pane targeting
+
+```js
+function onSelectEntity(doc, entityId) {
+  doc.ui.selection = entityId ? [entityId] : []
+  doc.ui.mode = entityId ? "edit" : "review"
+  // right pane retargets immediately to selected entity
+}
+```
+
+### 4.3 Esc behavior (mode + tool reset)
 
 ```js
 function handleEscToReviewMode(doc) {
   doc.ui.activeTool = null
   doc.ui.selection = []
   doc.ui.mode = "review"
+}
+```
+
+### 4.4 Input validity guards
+
+```js
+function enforceFieldConstraintsOrThrow(doc, ctx, value) {
+  if (ctx.fieldPath.endsWith(".width") || ctx.fieldPath.endsWith(".height")) {
+    if (value < 24) throw new Error("Dimension below minimum")
+  }
+  if (ctx.fieldPath.endsWith(".source.side") || ctx.fieldPath.endsWith(".target.side")) {
+    if (!["top", "right", "bottom", "left"].includes(value)) {
+      throw new Error("Invalid connector side")
+    }
+  }
 }
 ```
 
@@ -379,12 +433,30 @@ function dist(a, b) {
 
 ---
 
-## 8) UI mapping (from requirements + UI layout)
+## 8) Persistence and identity integrity
+
+```js
+function serializeDocument(doc) {
+  return JSON.stringify(doc)
+}
+
+function deserializeDocument(raw) {
+  const doc = JSON.parse(raw)
+  validateDocument(doc)
+  assertUniqueAndWellFormedIds(doc)
+  return doc
+}
+```
+
+---
+
+## 9) UI mapping (from requirements + UI layout)
 
 - Top bar includes File, Edit, View, Zoom, Snap, Validate, Export, and mode toggle.
 - Left pane includes Add Part, Add Interface, Add Connector, Add Note, Delete Entity, Reset Canvas.
 - Right pane renders exactly one of Edit or Review mode.
 - Status bar mirrors `ui` telemetry (`cursor`, `zoom`, `snap`, `hoveredId`, `selection`).
 - Interaction lifecycle: validate action -> update model -> recompute derived geometry/routing -> rerender SVG.
+- Save/reload preserves committed edits and ID/naming integrity.
 
 This mapping keeps the model-first architecture and deterministic SVG rendering contract intact.
