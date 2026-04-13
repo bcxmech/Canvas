@@ -194,3 +194,71 @@ A release candidate is compliant when:
 - [ ] Internal connectors are allowed to cross.
 - [ ] Connector endpoint sides/routes auto-update after dependent movements.
 - [ ] Connector reversal impacts direction only.
+
+---
+
+## 11. CTQ Compliance Requirements (Normative)
+
+This section maps the product behavior to `CTQs.md` and is mandatory for implementation and QA.
+
+### 11.1 Edit commit and render consistency (CTQ A: 1-8)
+- The app SHALL NOT require an Apply/Save-in-pane button for field edits.
+- Field edits SHALL commit on edit-finish events (`blur`, `Enter`, picker close, drag-end).
+- After commit, model state SHALL update in the same interaction cycle, then canvas render SHALL update immediately.
+- Edit handlers SHALL scope mutations to the selected entity (or declared dependents only).
+- The render pipeline SHALL prevent stale visuals after repeated edits (text, color, geometry, direction, arrowheads).
+- Right pane values and canvas visuals SHALL remain synchronized after each commit.
+- Save/reload SHALL preserve all committed values exactly.
+
+### 11.2 Editable attributes and precedence (CTQ B: 9-15)
+- Edit Mode SHALL show only editable attributes relevant to the selected entity type.
+- Each entity type SHALL expose the complete intended editable set and SHALL NOT expose unintended/internal fields.
+- Input constraints SHALL prevent invalid values (type, range, enum, referential integrity).
+- Instance-level fields SHALL be editable independently per entity instance.
+- Review Mode SHALL support editing document-level defaults (`settings`).
+- When defaults and overrides coexist, instance overrides SHALL take precedence deterministically.
+- Changes to inherited/default values SHALL propagate to all dependent entities immediately.
+
+### 11.3 Right-pane behavior (CTQ C: 16-20)
+- Exactly one pane mode SHALL render at a time (`review` XOR `edit`).
+- Review Mode SHALL present document settings above canvas summary.
+- Edit Mode SHALL always target the current selection and only that selection’s fields.
+- Any selection change SHALL immediately retarget Edit Mode content.
+- Review summary counts/status SHALL reflect current model state after edits.
+
+### 11.4 Geometry and direct manipulation (CTQ D: 21-26)
+- Model state SHALL store `x`, `y`, `width`, `height` for applicable entities and persist them.
+- Raw geometry inputs SHALL be hidden in normal Edit Mode where visual manipulation is the intended mechanism.
+- Parts and notes SHALL support reliable move + edge resize with min-size enforcement.
+- Interfaces SHALL be movable (within containment) and auto-sized from content, not manually resized.
+- Text edits and font-related changes SHALL recompute auto-size geometry.
+- All geometry operations SHALL preserve valid/non-corrupt rectangles and containment invariants.
+
+### 11.5 Containment and snapping (CTQ E: 27-32)
+- Interfaces SHALL remain fully contained in their parent part after any move/resize of either entity.
+- Movement outside parent bounds SHALL be prevented by clamping or rejected mutation.
+- Interfaces SHALL move freely inside allowed bounds when not snapped.
+- Snap-enabled interfaces SHALL snap correctly to top/right/bottom/left edges within threshold.
+- Snap interaction SHOULD be easy to trigger without overly restrictive behavior.
+- Snapped state SHALL be represented consistently in model and rendered position.
+
+### 11.6 Text and auto-sizing (CTQ F: 33-37)
+- Text-bearing entities (part labels/interfaces/notes/connectors where applicable) SHALL be editable in pane controls.
+- Text changes SHALL rerender immediately after edit-finish.
+- Auto-sized entities SHALL resize to fit text and preserve readability.
+- Multiline text SHALL remain readable and geometrically valid.
+- Font-size/style changes SHALL rerender all affected text immediately.
+
+### 11.7 Connector logic, routing, and editable connector fields (CTQ G+H: 38-49)
+- Connectors SHALL be classified as `internal` or `external` deterministically.
+- Connection rules SHALL enforce valid/invalid interface linkage constraints.
+- Endpoints SHALL attach only to valid interface midpoint candidates.
+- Routing SHALL account for selected/resolved source+target sides and support multi-segment orthogonal paths.
+- Routing SHALL choose shortest valid route under normal rules.
+- External snapped-edge overrides SHALL supersede generic shortest-path choice when applicable.
+- External routing SHALL treat entity bodies/labels as obstacles per rules.
+- Connectors SHALL reroute after dependent geometry/text changes.
+- Editable connector direction/arrowhead side/content/style fields SHALL rerender immediately upon commit.
+
+### 11.8 Naming and identity integrity (CTQ I: 50)
+- ID generation and derived naming conventions SHALL remain valid through create, edit, connect, delete, save, and reload flows.
