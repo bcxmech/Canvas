@@ -1,6 +1,6 @@
 # UI Layout Specification (Envisioned Canvas App)
 
-This document translates the product requirements and model prototypes into a concrete UI layout for the SVG canvas app.
+This document translates the requirements and prototypes into a concrete UI layout for the SVG canvas app.
 
 ## 1) Primary Application Shell
 
@@ -13,8 +13,8 @@ This document translates the product requirements and model prototypes into a co
 │                      │                SVG Canvas                      │                       │
 │ + Add Part           │          ┌───────────────────────┐             │ Edit Mode OR          │
 │ + Add Interface      │          │ grid / guides         │             │ Review Mode           │
-│ + Add Connector      │          │ parts/interfaces       │             │ (never both together) │
-│ + Add Note           │          │ connectors/notes       │             │                       │
+│ + Add Connector      │          │ parts/interfaces      │             │ (never both together) │
+│ + Add Note           │          │ connectors/notes      │             │                       │
 │ + Delete Entity      │          │                       │             │                       │
 │ + Reset Canvas       │          └───────────────────────┘             │                       │
 ├──────────────────────┴────────────────────────────────────────────────┴───────────────────────┤
@@ -119,6 +119,7 @@ Shows document-level settings and state summary.
 
 ### Mode rule
 - Right pane must render **exactly one** mode at a time.
+- Pressing **Esc** always ends any in-progress tool flow, clears selection, and sets mode to **Review**.
 
 ---
 
@@ -141,44 +142,25 @@ Shows document-level settings and state summary.
 - Drag edges/corners to resize.
 - Selection state shows handles/highlight.
 
-## 5.2 Interface Placement States
+## 5.2 Viewport controls
 
-Free placement:
-
-```text
-┌────────────────────────────────────┐
-│ partA                              │
-│      ┌──────────────┐              │
-│      │ partA_inf1   │              │
-│      └──────────────┘              │
-└────────────────────────────────────┘
-```
-
-Snapped to part edge (example left):
-
-```text
-┌────────────────────────────────────┐
-│ partA                              │
-├──────────────┐                     │
-│ partA_inf1   │                     │
-└──────────────┘                     │
-└────────────────────────────────────┘
-```
-
-- Interfaces auto-size to label text.
-- Interfaces stay fully inside parent part bounds.
+- **Zoom in/out** with mouse wheel scrolling centered on pointer position.
+- **Pan** by dragging with the **middle mouse button pressed**.
+- Canvas zoom is independent from browser zoom.
 
 ## 5.3 Connector Visual Rules
 
 ```text
 interface A (right mid) ──┐
                           ├── orthogonal route ──▶ interface B (left mid)
-note/part obstacles      ─┘
+part/note obstacles      ─┘
 ```
 
 - Endpoints attach to valid interface edge-midpoint candidates.
-- Route prefers shortest valid orthogonal path.
-- Snapped-edge routing may override default shortest route.
+- Connectors continuously re-evaluate source/target edge choice after interface/part movement.
+- For `external` connectors, router avoids crossing other entities (parts, interfaces, notes).
+- `internal` connectors may cross entities because both endpoints are within the same part context.
+- Connector **direction reversal** is supported; other connector semantics are not reversed.
 
 ---
 
@@ -203,6 +185,8 @@ Edit finishes (blur/enter/drag-end)
         ↓
 Document model updates (source of truth)
         ↓
+Connector endpoints and routes recompute if dependencies changed
+        ↓
 SVG rerenders affected entities
         ↓
 Right pane + status bar remain synchronized
@@ -217,16 +201,17 @@ This ensures no “Apply” button workflow and avoids stale visual state.
 - Keep top bar and status bar fixed-height.
 - Panes are fixed or min/max width; center canvas expands fluidly.
 - On smaller screens, left pane can collapse to icons; right pane can become a drawer.
-- Canvas zoom should be independent from browser zoom.
 
 ---
 
 ## 9) UI Acceptance Checklist (Condensed)
 
 - Right pane exclusivity: Edit **xor** Review.
-- Edit commits update model + canvas immediately.
+- **Esc** interrupts active interactions, deselects all, and switches to Review mode.
+- Mouse wheel zoom and middle-button pan work on canvas.
 - Entity-specific editable fields only.
 - Geometry primarily through direct manipulation.
-- Containment and snapping feel deterministic.
-- Connector routing updates after dependent moves/edits.
+- External connector routing avoids crossing other entities.
+- Internal connectors may cross.
+- Connector routing + endpoint sides update after dependent moves/edits.
 - Status bar always reflects current interaction state.
