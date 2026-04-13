@@ -13,8 +13,9 @@ This document translates the product requirements and model prototypes into a co
 │                      │                SVG Canvas                      │                       │
 │ + Add Part           │          ┌───────────────────────┐             │ Edit Mode OR          │
 │ + Add Interface      │          │ grid / guides         │             │ Review Mode           │
-│ + Add Note           │          │ parts/interfaces       │             │ (never both together) │
-│ + Delete Entity      │          │ connectors/notes       │             │                       │
+│ + Add Connector      │          │ parts/interfaces       │             │ (never both together) │
+│ + Add Note           │          │ connectors/notes       │             │                       │
+│ + Delete Entity      │          │                       │             │                       │
 │ + Reset Canvas       │          └───────────────────────┘             │                       │
 ├──────────────────────┴────────────────────────────────────────────────┴───────────────────────┤
 │ Status Bar: cursor(x,y) | zoom | snap:on/off | hover target | selection count                │
@@ -51,6 +52,7 @@ This document translates the product requirements and model prototypes into a co
 │ CREATE                   │
 │  • Add Part              │
 │  • Add Interface         │
+│  • Add Connector         │
 │  • Add Note              │
 │                          │
 │ CANVAS ACTIONS           │
@@ -62,6 +64,7 @@ This document translates the product requirements and model prototypes into a co
 ### Interaction notes
 - Actions are explicit buttons (not hidden in floating menus).
 - `Add Interface` requires a selected parent part (or prompts to pick one).
+- `Add Connector` opens a guided flow to pick source interface and target interface before committing a routed connector.
 - `Delete Entity` targets current selection.
 - `Reset Canvas` is destructive and should require confirmation.
 

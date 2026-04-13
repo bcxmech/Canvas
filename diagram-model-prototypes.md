@@ -202,6 +202,12 @@ const ConnectorEntity = {
 }
 ```
 
+Connector creation is initiated from the left-pane `Add Connector` action and follows a guided endpoint flow:
+1. pick `source.interfaceId`
+2. pick `target.interfaceId`
+3. resolve endpoint sides and compute initial orthogonal route
+4. persist the connector in `entities` and append its id to `order`
+
 ### 3.4 Note prototype
 
 ```js
