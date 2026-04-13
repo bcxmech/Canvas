@@ -67,6 +67,7 @@ This document translates the requirements and prototypes into a concrete UI layo
 - `Add Connector` opens a guided flow to pick source interface and target interface before committing a routed connector.
 - `Delete Entity` targets current selection.
 - `Reset Canvas` is destructive and should require confirmation.
+- While a right-pane text field is being edited, keyboard focus remains in that field until the user clicks elsewhere, tabs away, or presses `Enter` when `Enter` is configured to commit.
 
 ---
 
@@ -193,6 +194,7 @@ Right pane + status bar remain synchronized
 ```
 
 This ensures no “Apply” button workflow and avoids stale visual state.
+It also ensures the active text input retains focus during typing and rerender activity until an explicit focus-change action occurs.
 
 ---
 
@@ -215,3 +217,4 @@ This ensures no “Apply” button workflow and avoids stale visual state.
 - Internal connectors may cross.
 - Connector routing + endpoint sides update after dependent moves/edits.
 - Status bar always reflects current interaction state.
+- Text-field focus is not stolen during typing except by explicit click/tab/commit-enter behavior.

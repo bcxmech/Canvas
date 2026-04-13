@@ -154,6 +154,11 @@ For every user action:
 - `locked=true` entities SHALL reject mutation.
 - `visible=false` entities SHALL not render and SHOULD be excluded from hit testing.
 
+### 7.5 Text-input focus retention
+- While the user is typing in a text field, focus SHALL remain in that same field.
+- Focus MAY move only when the user explicitly clicks elsewhere, tabs away, or presses `Enter` when `Enter` is configured as a commit action for that field.
+- Incidental canvas interactions (hover, model recompute, rerender) SHALL NOT steal focus from the active text field.
+
 ---
 
 ## 8. Validation and Rule Enforcement
@@ -194,3 +199,4 @@ A release candidate is compliant when:
 - [ ] Internal connectors are allowed to cross.
 - [ ] Connector endpoint sides/routes auto-update after dependent movements.
 - [ ] Connector reversal impacts direction only.
+- [ ] Text-field focus is retained during typing unless user click/tab/commit-enter intentionally changes focus.
